@@ -1,31 +1,29 @@
-import os
 from src.ingestion.ingest_data import load_data
 from src.preprocessing.preprocess import preprocess_data
+from src.training.train import train_model  # <-- Ye nayi line hai
+import os
 
 if __name__ == "__main__":
     
-    # 1. RAW Data ka Rasta (Input)
+    # Raste set kar rahe hain
     raw_data_path = "data/raw/test_data.csv"
-    
-    # 2. PROCESSED Data ka Rasta (Output - Jahan save hoga)
     processed_data_path = "data/processed/clean_data.csv"
-    
+    model_path = "models/model.pkl"
+
     print("\n--- 🚀 Pipeline Starting ---")
     
-    # Step A: Load Data
+    # Step 1: Data Load Karo
     df = load_data(raw_data_path)
-    print(f"\n✅ Raw Data Loaded: {df.shape}")
-
-    # Step B: Clean Data
-    df_clean = preprocess_data(df)
-    print(f"✅ Data Cleaned & Encoded")
-
-    # Step C: Save Data (Ye hai main step)
-    # Pehle check karo ki folder exist karta hai ya nahi
-    os.makedirs(os.path.dirname(processed_data_path), exist_ok=True)
     
-    # File save karo (index=False jaruri hai taaki extra numbers na aayein)
+    # Step 2: Data Clean Karo
+    df_clean = preprocess_data(df)
+    
+    # Clean Data ko Save Karo (Training ke liye)
+    os.makedirs(os.path.dirname(processed_data_path), exist_ok=True)
     df_clean.to_csv(processed_data_path, index=False)
     
-    print(f"\n📦 Data Saved at: {processed_data_path}")
-    print("--- 🏁 Data Engineering Pipeline Finished! ---")
+    # Step 3: Model Train Karo (Asli Magic)
+    print("\n--- 🧠 Training Model ---")
+    train_model(processed_data_path, model_path)
+    
+    print("\n--- ✅ End-to-End Pipeline Success! ---")
