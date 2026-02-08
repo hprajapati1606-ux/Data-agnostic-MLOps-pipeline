@@ -1,50 +1,46 @@
 import pandas as pd
 import numpy as np
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder
 import logging
 
-# Logging Setup
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Logger Setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+def preprocess_data(df):
     """
-    Auto-detects column types and cleans them:
-    1. Fills missing values.
-    2. Converts text to numbers (Encoding).
+    Universal Cleaner: Handles Missing Values, Categorical Encoding, AND Lists.
     """
     try:
-        df_clean = df.copy()
-        
-        # --- 1. NUMERICAL COLUMNS (Numbers) Handle karna ---
-        # Code dhundega ki kaunse columns numbers hain
-        num_cols = df_clean.select_dtypes(include=['number']).columns
-        
-        if len(num_cols) > 0:
-            # Missing values ko 'Mean' (Average) se bharo
-            imputer = SimpleImputer(strategy='mean')
-            df_clean[num_cols] = imputer.fit_transform(df_clean[num_cols])
-            logger.info(f"🔢 Numerics handled: {list(num_cols)}")
+        # 1. Handling Lists & Dictionaries (The Fix for your Error) 🛠️
+        # Agar cell me List ya Dict hai, to usse String bana do taki crash na ho
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                df[col] = df[col].apply(lambda x: str(x) if isinstance(x, (list, dict)) else x)
 
-        # --- 2. CATEGORICAL COLUMNS (Text) Handle karna ---
-        # Code dhundega ki kaunse columns text hain
-        cat_cols = df_clean.select_dtypes(include=['object', 'category']).columns
-        
-        if len(cat_cols) > 0:
-            # Pehle missing values ko 'Most Frequent' (Jo sabse zyada aaya ho) se bharo
-            imputer_cat = SimpleImputer(strategy='most_frequent')
-            df_clean[cat_cols] = imputer_cat.fit_transform(df_clean[cat_cols])
-            
-            # Text ko Numbers mein badlo (Label Encoding)
-            le = LabelEncoder()
-            for col in cat_cols:
-                df_clean[col] = le.fit_transform(df_clean[col].astype(str))
-            
-            logger.info(f"🔤 Text converted to numbers: {list(cat_cols)}")
-            
+        # 2. Separate Numeric & Categorical columns
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        categorical_cols = df.select_dtypes(include=['object']).columns
+
+        logger.info(f"Numerics: {list(numeric_cols)}")
+        logger.info(f"Categoricals: {list(categorical_cols)}")
+
+        # 3. Handle Missing Values (Numerics -> Mean)
+        if len(numeric_cols) > 0:
+            df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
+
+        # 4. Handle Missing Values (Categorical -> Mode)
+        for col in categorical_cols:
+            if df[col].isnull().sum() > 0:
+                mode_val = df[col].mode()[0]
+                df[col] = df[col].fillna(mode_val)
+
+        # 5. Convert Text to Numbers (Label Encoding)
+        # Simple Logic: Har unique text ko ek number de do
+        for col in categorical_cols:
+            df[col] = df[col].astype('category').cat.codes
+
         logger.info("✅ Preprocessing Complete!")
-        return df_clean
+        return df
 
     except Exception as e:
         logger.error(f"❌ Error in preprocessing: {e}")
