@@ -1,44 +1,60 @@
 import pandas as pd
-import pickle
+import joblib
 import os
 import logging
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LogisticRegression, LinearRegression
 
-# Logging Setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def train_model(data_path, model_path):
+def train_model(data_path: str, model_save_path: str, target_column: str) -> None:
+    """
+    Trains a model predicting the specific 'target_column'.
+    Auto-detects Regression vs Classification based on target values.
+    """
     try:
-        # 1. Data Load
+        if not os.path.exists(data_path):
+            raise FileNotFoundError(f"File not found: {data_path}")
+        
         df = pd.read_csv(data_path)
-        logger.info(f"Data loaded for training: {df.shape}")
+        
+        if target_column not in df.columns:
+            raise ValueError(f"Target column '{target_column}' not found in dataset.")
 
-        # Assume last column is Target (y), rest are Features (X)
-        X = df.iloc[:, :-1] # Saare columns except last
-        y = df.iloc[:, -1]  # Sirf last column (Target)
+        # Separate Features (X) and Target (y)
+        X = df.drop(columns=[target_column])
+        y = df[target_column]
+        
+        logger.info(f"🎯 Target set to: '{target_column}'")
 
-        # 2. Split Data
+        # Split Data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # 3. Model Train (Random Forest)
-        model = RandomForestRegressor(n_estimators=100)
+        # Auto-Detect Problem Type
+        unique_values = y.nunique()
+        if unique_values <= 10:
+            problem_type = "Classification"
+            model = LogisticRegression(max_iter=1000)
+        else:
+            problem_type = "Regression"
+            model = LinearRegression()
+            
+        logger.info(f"🕵️ Detected Problem Type: {problem_type}")
+
+        # Train Model
         model.fit(X_train, y_train)
-        logger.info("🤖 Model Training Complete!")
 
-        # 4. Evaluate
-        predictions = model.predict(X_test)
-        mse = mean_squared_error(y_test, predictions)
-        logger.info(f"📉 Model Error (MSE): {mse}")
-
-        # 5. Save Model
-        os.makedirs(os.path.dirname(model_path), exist_ok=True)
-        with open(model_path, 'wb') as f:
-            pickle.dump(model, f)
-        logger.info(f"📦 Model saved at {model_path}")
+        # Save Model
+        os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+        joblib.dump(model, model_save_path)
+        
+        # Save Metadata (to remember what we trained for)
+        meta_data = {"target_col": target_column, "problem_type": problem_type}
+        joblib.dump(meta_data, model_save_path.replace(".pkl", "_meta.pkl"))
+        
+        logger.info(f"💾 Model and Metadata saved successfully.")
 
     except Exception as e:
-        logger.error(f"❌ Error in training: {e}")
+        logger.error(f"❌ Training Error: {e}")
         raise e

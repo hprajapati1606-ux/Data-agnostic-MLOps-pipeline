@@ -1,4 +1,7 @@
 pandas
-openpyxl
-numpy
 scikit-learn
+streamlit
+streamlit-lottie
+joblib
+requests
+openpyxl
