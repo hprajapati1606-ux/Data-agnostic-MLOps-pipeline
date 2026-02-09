@@ -5,8 +5,8 @@ from sklearn.metrics import mean_squared_error, accuracy_score
 import joblib
 import os
 import logging
-import mlflow               # <--- Naya Mehmaan 1
-import mlflow.sklearn       # <--- Naya Mehmaan 2
+import mlflow               
+import mlflow.sklearn       
 
 # Logger Setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -42,7 +42,8 @@ def train_model(data_path, model_path):
             is_classification = False
 
         # --- 🧪 MLFLOW MAGIC STARTS HERE ---
-        mlflow.set_experiment("Data_Agnostic_Pipeline") # Experiment ka naam
+        # Ye line MLflow ko batati hai ki experiment ka naam kya rakhna hai
+        mlflow.set_experiment("Data_Agnostic_Pipeline") 
         
         with mlflow.start_run(): # CCTV On kiya
             
@@ -72,7 +73,7 @@ def train_model(data_path, model_path):
             
         # --- 🧪 MLFLOW MAGIC ENDS ---
 
-        # Local Save (Apne purane tareeke ke liye)
+        # Local Save
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         joblib.dump(model, model_path)
         logger.info(f"💾 Model saved locally at {model_path}")
