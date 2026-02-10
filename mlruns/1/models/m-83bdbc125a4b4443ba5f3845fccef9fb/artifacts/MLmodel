@@ -1,0 +1,23 @@
+artifact_path: file:///C:/Users/ADMIN/OneDrive/Desktop/m/Data-agnostic-MLOps-pipeline/mlruns/1/models/m-83bdbc125a4b4443ba5f3845fccef9fb/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.4
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.9.0
+model_id: m-83bdbc125a4b4443ba5f3845fccef9fb
+model_size_bytes: 53855
+model_uuid: m-83bdbc125a4b4443ba5f3845fccef9fb
+prompts: null
+run_id: 0f2c11bacfe245b0838012da3a456116
+utc_time_created: '2026-02-10 08:15:58.231614'
